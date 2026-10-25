@@ -1,0 +1,27 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+
+# Node / React / React Native
+node_modules/
+dist/
+build/
+.expo/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+
+# IDE / OS
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# Local reference documents
+jjbochenek-*.pdf

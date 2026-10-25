@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: stayflow-db
+    environment:
+      POSTGRES_USER: stayflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: stayflow
+    ports:
+      - "5434:5432"
+    volumes:
+      - stayflow-pgdata:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+
+volumes:
+  stayflow-pgdata:
