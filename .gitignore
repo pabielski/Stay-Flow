@@ -25,3 +25,11 @@ Thumbs.db
 
 # Local reference documents
 jjbochenek-*.pdf
+
+# AI assistant files
+.claude/
+CLAUDE.md
+AGENTS.md
+
+# Expo
+.expo/
