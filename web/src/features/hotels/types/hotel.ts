@@ -16,3 +16,5 @@ export type CreateHotelRequest = {
   email: string | null;
   checkInTime: string;
 };
+
+export type UpdateHotelRequest = CreateHotelRequest;

@@ -1,4 +1,8 @@
-import type { CreateHotelRequest, Hotel } from "../types/hotel";
+import type {
+  CreateHotelRequest,
+  UpdateHotelRequest,
+  Hotel,
+} from "../types/hotel";
 const API_URL = import.meta.env.VITE_API_URL;
 export const hotelKeys = {
   all: ["hotels"] as const,
@@ -43,4 +47,28 @@ async function readErrorMessage(response: Response): Promise<string> {
   }
 
   return `Wystąpił błąd (kod ${response.status}).`;
+}
+
+export async function updateHotel(
+  id: number,
+  request: UpdateHotelRequest,
+): Promise<void> {
+  const response = await fetch(`${API_URL}/api/hotels/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}
+export async function deactivateHotel(id: number): Promise<void> {
+  const response = await fetch(`${API_URL}/api/hotels/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
 }
