@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StayFlow.Data;
+using StayFlow.Services.Common.Exceptions;
 
 namespace StayFlow.Services.Features.Hotels.Commands;
 
@@ -12,20 +13,18 @@ public class DeactivateHotelHandler
         _db = db;
     }
 
-    public async Task<bool> HandleAsync(long id)
+    public async Task HandleAsync(long id)
     {
         var hotel = await _db.Hotels.FirstOrDefaultAsync(h => h.Id == id);
 
         if (hotel is null)
         {
-            return false;
+            throw new NotFoundException($"Nie znaleziono hotelu o id {id}.");
+
         }
 
         hotel.IsActive = false;
-        hotel.UpdatedAt = DateTime.UtcNow;
-
         await _db.SaveChangesAsync();
 
-        return true;
     }
 }

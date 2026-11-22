@@ -20,6 +20,7 @@ CREATE TABLE room_types (
     description    text,
     max_occupancy  smallint     NOT NULL,
     size_m2        numeric(6,2) NOT NULL,
+    price_per_night  numeric(10,2) NOT NULL,
     is_active      boolean      NOT NULL DEFAULT true,
     created_at     timestamptz  NOT NULL DEFAULT now(),
     updated_at     timestamptz  NOT NULL DEFAULT now(),
@@ -28,7 +29,8 @@ CREATE TABLE room_types (
         REFERENCES hotels (id) ON DELETE RESTRICT,
     CONSTRAINT uq_room_types_hotel_name UNIQUE (hotel_id, name),
     CONSTRAINT ck_room_types_max_occupancy CHECK (max_occupancy BETWEEN 1 AND 20),
-    CONSTRAINT ck_room_types_size_m2 CHECK (size_m2 > 0)
+    CONSTRAINT ck_room_types_size_m2 CHECK (size_m2 > 0),
+    CONSTRAINT ck_room_types_price_per_night CHECK (price_per_night >= 0)
 );
 
 CREATE TABLE rooms (
@@ -186,6 +188,8 @@ CREATE TABLE stays (
     room_id           bigint       NOT NULL,
     check_in_date     date         NOT NULL,
     check_out_date    date         NOT NULL,
+    price_per_night  numeric(10,2) NOT NULL,
+    total_price      numeric(10,2) NOT NULL,
     status            varchar(20)  NOT NULL DEFAULT 'expected',
     payment_status    varchar(20)  NOT NULL DEFAULT 'unpaid',
     check_in_token    varchar(100) NOT NULL,
@@ -202,6 +206,8 @@ CREATE TABLE stays (
         CHECK (status IN ('expected', 'checked_in', 'checked_out', 'cancelled')),
     CONSTRAINT ck_stays_payment_status
         CHECK (payment_status IN ('unpaid', 'paid', 'not_required')),
+    CONSTRAINT ck_stays_price_per_night CHECK (price_per_night >= 0),
+    CONSTRAINT ck_stays_total_price CHECK (total_price >= 0),
     CONSTRAINT ck_stays_dates
         CHECK (check_out_date > check_in_date)
 );
@@ -464,6 +470,7 @@ CREATE TABLE services (
     description       text,
     price             numeric(10,2) NOT NULL,
     requires_booking  boolean       NOT NULL DEFAULT false,
+    available_at_check_in  boolean NOT NULL DEFAULT false,
     duration_minutes  smallint,
     capacity          smallint,
     available_from    time,
@@ -522,3 +529,28 @@ CREATE TABLE service_orders (
 CREATE INDEX ix_service_orders_service_schedule ON service_orders (service_id, scheduled_start);
 CREATE INDEX ix_service_orders_stay_id ON service_orders (stay_id);
 CREATE INDEX ix_service_orders_assigned_to_user_id ON service_orders (assigned_to_user_id);
+
+CREATE FUNCTION set_updated_at() RETURNS trigger AS $$
+BEGIN
+    NEW.updated_at := now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_hotels_updated_at BEFORE UPDATE ON hotels FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_room_types_updated_at BEFORE UPDATE ON room_types FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_rooms_updated_at BEFORE UPDATE ON rooms FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_roles_updated_at BEFORE UPDATE ON roles FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_content_pages_updated_at BEFORE UPDATE ON content_pages FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_document_templates_updated_at BEFORE UPDATE ON document_templates FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_guests_updated_at BEFORE UPDATE ON guests FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_stays_updated_at BEFORE UPDATE ON stays FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_checklist_templates_updated_at BEFORE UPDATE ON checklist_templates FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_checklist_template_items_updated_at BEFORE UPDATE ON checklist_template_items FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_housekeeping_tasks_updated_at BEFORE UPDATE ON housekeeping_tasks FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_issue_categories_updated_at BEFORE UPDATE ON issue_categories FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_issues_updated_at BEFORE UPDATE ON issues FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_service_categories_updated_at BEFORE UPDATE ON service_categories FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_services_updated_at BEFORE UPDATE ON services FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_service_orders_updated_at BEFORE UPDATE ON service_orders FOR EACH ROW EXECUTE FUNCTION set_updated_at();

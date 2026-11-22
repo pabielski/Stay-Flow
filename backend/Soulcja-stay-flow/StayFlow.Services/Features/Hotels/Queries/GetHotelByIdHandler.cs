@@ -1,6 +1,8 @@
-﻿using StayFlow.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using StayFlow.Data;
+using StayFlow.Data.Entities;
+using StayFlow.Services.Common.Exceptions;
 using StayFlow.Services.Features.Hotels.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace StayFlow.Services.Features.Hotels.Queries
 {
@@ -12,12 +14,18 @@ namespace StayFlow.Services.Features.Hotels.Queries
         {
             _db = db;
         }
-        public async Task<HotelDto?> HandleAsync(long id)
+        public async Task<HotelDto> HandleAsync(long id)
         {
-            return await _db.Hotels
+
+             var hotel = await _db.Hotels
                 .Where(h => h.Id == id)
                 .Select(h => h.ToDto())
                 .FirstOrDefaultAsync();
+            if (hotel is null)
+            {
+                throw new NotFoundException($"Nie znaleziono hotelu o id {id}.");
+            }
+             return hotel;
         }
     }
 }

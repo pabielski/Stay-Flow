@@ -34,11 +34,6 @@ public class HotelsController : ControllerBase
     {
         var hotel = await _getHotelById.HandleAsync(id);
 
-        if (hotel is null)
-        {
-            return NotFound();
-        }
-
         return Ok(hotel);
     }
     //create
@@ -47,37 +42,21 @@ public class HotelsController : ControllerBase
     {
         var hotel = await _createHotel.HandleAsync(request);
 
-        if (hotel is null)
-        {
-            return Conflict(new { message = "Hotel o tej nazwie już istnieje w tym mieście." });
-        }
-
         return CreatedAtAction(nameof(GetById), new { id = hotel.Id }, hotel);
     }
     //update
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(long id, UpdateHotelRequest request)
     {
-        var result = await _updateHotel.HandleAsync(id, request);
-
-        return result switch
-        {
-            UpdateHotelResult.Updated => NoContent(),
-            UpdateHotelResult.NotFound => NotFound(),
-            UpdateHotelResult.Duplicate => Conflict(new { message = "Hotel o tej nazwie już istnieje w tym mieście." }),
-            _ => StatusCode(500)
-        };
+        await _updateHotel.HandleAsync(id, request);
+        return NoContent();
+        
     }
     //delete
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(long id)
     {
-        var found = await _deactivateHotel.HandleAsync(id);
-
-        if (!found)
-        {
-            return NotFound();
-        }
+       await _deactivateHotel.HandleAsync(id);
 
         return NoContent();
     }

@@ -12,7 +12,7 @@ export async function getHotels(): Promise<Hotel[]> {
   const response = await fetch(`${API_URL}/api/hotels`);
 
   if (!response.ok) {
-    throw new Error(`Nie udało się pobrać hoteli (kod ${response.status}).`);
+    throw new Error(await readErrorMessage(response));
   }
 
   return response.json();
@@ -34,6 +34,9 @@ export async function createHotel(request: CreateHotelRequest): Promise<Hotel> {
 async function readErrorMessage(response: Response): Promise<string> {
   try {
     const body = await response.json();
+    if (body.detail) {
+      return body.detail;
+    }
 
     if (body.message) {
       return body.message;
