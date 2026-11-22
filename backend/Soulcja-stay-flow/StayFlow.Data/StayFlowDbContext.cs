@@ -38,8 +38,6 @@ public partial class StayFlowDbContext : DbContext
 
     public virtual DbSet<Permission> Permissions { get; set; }
 
-    public virtual DbSet<Role> Roles { get; set; }
-
     public virtual DbSet<RolePermission> RolePermissions { get; set; }
 
     public virtual DbSet<Room> Rooms { get; set; }
@@ -55,10 +53,6 @@ public partial class StayFlowDbContext : DbContext
     public virtual DbSet<Stay> Stays { get; set; }
 
     public virtual DbSet<StayGuest> StayGuests { get; set; }
-
-    public virtual DbSet<User> Users { get; set; }
-
-    public virtual DbSet<UserRole> UserRoles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -163,11 +157,6 @@ public partial class StayFlowDbContext : DbContext
             entity.Property(e => e.Version)
                 .HasDefaultValue(1)
                 .HasColumnName("version");
-
-            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ContentPages)
-                .HasForeignKey(d => d.CreatedByUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_content_pages_users");
 
             entity.HasOne(d => d.Hotel).WithMany(p => p.ContentPages)
                 .HasForeignKey(d => d.HotelId)
@@ -328,25 +317,10 @@ public partial class StayFlowDbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
 
-            entity.HasOne(d => d.AssignedByUser).WithMany(p => p.HousekeepingTaskAssignedByUsers)
-                .HasForeignKey(d => d.AssignedByUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_housekeeping_tasks_assigned_by");
-
-            entity.HasOne(d => d.AssignedToUser).WithMany(p => p.HousekeepingTaskAssignedToUsers)
-                .HasForeignKey(d => d.AssignedToUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_housekeeping_tasks_assigned_to");
-
             entity.HasOne(d => d.ChecklistTemplate).WithMany(p => p.HousekeepingTasks)
                 .HasForeignKey(d => d.ChecklistTemplateId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_housekeeping_tasks_templates");
-
-            entity.HasOne(d => d.InspectedByUser).WithMany(p => p.HousekeepingTaskInspectedByUsers)
-                .HasForeignKey(d => d.InspectedByUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_housekeeping_tasks_inspected_by");
 
             entity.HasOne(d => d.Room).WithMany(p => p.HousekeepingTasks)
                 .HasForeignKey(d => d.RoomId)
@@ -436,11 +410,6 @@ public partial class StayFlowDbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
 
-            entity.HasOne(d => d.AssignedToUser).WithMany(p => p.IssueAssignedToUsers)
-                .HasForeignKey(d => d.AssignedToUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_issues_assigned_to");
-
             entity.HasOne(d => d.Category).WithMany(p => p.Issues)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict)
@@ -460,11 +429,6 @@ public partial class StayFlowDbContext : DbContext
                 .HasForeignKey(d => d.ReportedByGuestId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_issues_reported_by_guest");
-
-            entity.HasOne(d => d.ReportedByUser).WithMany(p => p.IssueReportedByUsers)
-                .HasForeignKey(d => d.ReportedByUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_issues_reported_by_user");
 
             entity.HasOne(d => d.Room).WithMany(p => p.Issues)
                 .HasForeignKey(d => d.RoomId)
@@ -526,11 +490,6 @@ public partial class StayFlowDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_issue_comments_guests");
 
-            entity.HasOne(d => d.AuthorUser).WithMany(p => p.IssueComments)
-                .HasForeignKey(d => d.AuthorUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_issue_comments_users");
-
             entity.HasOne(d => d.Issue).WithMany(p => p.IssueComments)
                 .HasForeignKey(d => d.IssueId)
                 .HasConstraintName("fk_issue_comments_issues");
@@ -568,11 +527,6 @@ public partial class StayFlowDbContext : DbContext
             entity.Property(e => e.StayId).HasColumnName("stay_id");
             entity.Property(e => e.TermsPageId).HasColumnName("terms_page_id");
 
-            entity.HasOne(d => d.CompletedByUser).WithMany(p => p.OnlineCheckIns)
-                .HasForeignKey(d => d.CompletedByUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_online_check_ins_users");
-
             entity.HasOne(d => d.Stay).WithOne(p => p.OnlineCheckIn)
                 .HasForeignKey<OnlineCheckIn>(d => d.StayId)
                 .HasConstraintName("fk_online_check_ins_stays");
@@ -600,30 +554,6 @@ public partial class StayFlowDbContext : DbContext
             entity.Property(e => e.Description).HasColumnName("description");
         });
 
-        modelBuilder.Entity<Role>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("roles_pkey");
-
-            entity.ToTable("roles");
-
-            entity.HasIndex(e => e.Name, "uq_roles_name").IsUnique();
-
-            entity.Property(e => e.Id)
-                .UseIdentityAlwaysColumn()
-                .HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.IsSystem).HasColumnName("is_system");
-            entity.Property(e => e.Name)
-                .HasMaxLength(100)
-                .HasColumnName("name");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("updated_at");
-        });
-
         modelBuilder.Entity<RolePermission>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("role_permissions_pkey");
@@ -647,10 +577,6 @@ public partial class StayFlowDbContext : DbContext
                 .HasForeignKey(d => d.PermissionId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_role_permissions_permissions");
-
-            entity.HasOne(d => d.Role).WithMany(p => p.RolePermissions)
-                .HasForeignKey(d => d.RoleId)
-                .HasConstraintName("fk_role_permissions_roles");
         });
 
         modelBuilder.Entity<Room>(entity =>
@@ -725,6 +651,9 @@ public partial class StayFlowDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(200)
                 .HasColumnName("name");
+            entity.Property(e => e.PricePerNight)
+                .HasPrecision(10, 2)
+                .HasColumnName("price_per_night");
             entity.Property(e => e.SizeM2)
                 .HasPrecision(6, 2)
                 .HasColumnName("size_m2");
@@ -749,6 +678,7 @@ public partial class StayFlowDbContext : DbContext
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
+            entity.Property(e => e.AvailableAtCheckIn).HasColumnName("available_at_check_in");
             entity.Property(e => e.AvailableFrom).HasColumnName("available_from");
             entity.Property(e => e.AvailableTo).HasColumnName("available_to");
             entity.Property(e => e.Capacity).HasColumnName("capacity");
@@ -850,11 +780,6 @@ public partial class StayFlowDbContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
 
-            entity.HasOne(d => d.AssignedToUser).WithMany(p => p.ServiceOrders)
-                .HasForeignKey(d => d.AssignedToUserId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_service_orders_users");
-
             entity.HasOne(d => d.Service).WithMany(p => p.ServiceOrders)
                 .HasForeignKey(d => d.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict)
@@ -893,6 +818,9 @@ public partial class StayFlowDbContext : DbContext
                 .HasMaxLength(20)
                 .HasDefaultValueSql("'unpaid'::character varying")
                 .HasColumnName("payment_status");
+            entity.Property(e => e.PricePerNight)
+                .HasPrecision(10, 2)
+                .HasColumnName("price_per_night");
             entity.Property(e => e.RoomAccessCode)
                 .HasMaxLength(20)
                 .HasColumnName("room_access_code");
@@ -901,6 +829,9 @@ public partial class StayFlowDbContext : DbContext
                 .HasMaxLength(20)
                 .HasDefaultValueSql("'expected'::character varying")
                 .HasColumnName("status");
+            entity.Property(e => e.TotalPrice)
+                .HasPrecision(10, 2)
+                .HasColumnName("total_price");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
@@ -943,81 +874,6 @@ public partial class StayFlowDbContext : DbContext
             entity.HasOne(d => d.Stay).WithMany(p => p.StayGuests)
                 .HasForeignKey(d => d.StayId)
                 .HasConstraintName("fk_stay_guests_stays");
-        });
-
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("users_pkey");
-
-            entity.ToTable("users");
-
-            entity.HasIndex(e => e.HotelId, "ix_users_hotel_id");
-
-            entity.HasIndex(e => e.Email, "uq_users_email").IsUnique();
-
-            entity.Property(e => e.Id)
-                .UseIdentityAlwaysColumn()
-                .HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Email)
-                .HasMaxLength(254)
-                .HasColumnName("email");
-            entity.Property(e => e.FirstName)
-                .HasMaxLength(100)
-                .HasColumnName("first_name");
-            entity.Property(e => e.HotelId).HasColumnName("hotel_id");
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue(true)
-                .HasColumnName("is_active");
-            entity.Property(e => e.LastLoginAt).HasColumnName("last_login_at");
-            entity.Property(e => e.LastName)
-                .HasMaxLength(100)
-                .HasColumnName("last_name");
-            entity.Property(e => e.PasswordHash)
-                .HasMaxLength(255)
-                .HasColumnName("password_hash");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(30)
-                .HasColumnName("phone");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("updated_at");
-
-            entity.HasOne(d => d.Hotel).WithMany(p => p.Users)
-                .HasForeignKey(d => d.HotelId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_users_hotels");
-        });
-
-        modelBuilder.Entity<UserRole>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("user_roles_pkey");
-
-            entity.ToTable("user_roles");
-
-            entity.HasIndex(e => e.RoleId, "ix_user_roles_role_id");
-
-            entity.HasIndex(e => new { e.UserId, e.RoleId }, "uq_user_roles_user_role").IsUnique();
-
-            entity.Property(e => e.Id)
-                .UseIdentityAlwaysColumn()
-                .HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("created_at");
-            entity.Property(e => e.RoleId).HasColumnName("role_id");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-
-            entity.HasOne(d => d.Role).WithMany(p => p.UserRoles)
-                .HasForeignKey(d => d.RoleId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_user_roles_roles");
-
-            entity.HasOne(d => d.User).WithMany(p => p.UserRoles)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("fk_user_roles_users");
         });
 
         OnModelCreatingPartial(modelBuilder);

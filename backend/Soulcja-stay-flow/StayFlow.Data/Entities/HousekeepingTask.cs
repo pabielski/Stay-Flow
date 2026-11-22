@@ -39,15 +39,9 @@ public partial class HousekeepingTask
 
     public DateTime UpdatedAt { get; set; }
 
-    public virtual User? AssignedByUser { get; set; }
-
-    public virtual User? AssignedToUser { get; set; }
-
     public virtual ChecklistTemplate ChecklistTemplate { get; set; } = null!;
 
     public virtual ICollection<HousekeepingTaskChecklistItem> HousekeepingTaskChecklistItems { get; set; } = new List<HousekeepingTaskChecklistItem>();
-
-    public virtual User? InspectedByUser { get; set; }
 
     public virtual ICollection<Issue> Issues { get; set; } = new List<Issue>();
 

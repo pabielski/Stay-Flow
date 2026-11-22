@@ -35,8 +35,6 @@ public partial class ServiceOrder
 
     public DateTime UpdatedAt { get; set; }
 
-    public virtual User? AssignedToUser { get; set; }
-
     public virtual Service Service { get; set; } = null!;
 
     public virtual Stay Stay { get; set; } = null!;

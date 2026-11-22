@@ -12,7 +12,14 @@ CREATE TABLE hotels (
 
     CONSTRAINT uq_hotels_name_city UNIQUE (name, city)
 );
+ALTER TABLE identity.users
+    ADD CONSTRAINT fk_users_hotels FOREIGN KEY (hotel_id)
+        REFERENCES hotels (id) ON DELETE RESTRICT;
 
+ALTER TABLE identity.users
+    ALTER COLUMN is_active SET DEFAULT true;
+
+CREATE INDEX ix_users_hotel_id ON identity.users (hotel_id);
 CREATE TABLE room_types (
     id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     hotel_id       bigint       NOT NULL,
@@ -59,38 +66,6 @@ CREATE TABLE rooms (
 
 CREATE INDEX ix_rooms_room_type_id ON rooms (room_type_id);
 
-CREATE TABLE users (
-    id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    hotel_id       bigint,
-    email          varchar(254) NOT NULL,
-    password_hash  varchar(255) NOT NULL,
-    first_name     varchar(100) NOT NULL,
-    last_name      varchar(100) NOT NULL,
-    phone          varchar(30),
-    is_active      boolean      NOT NULL DEFAULT true,
-    last_login_at  timestamptz,
-    created_at     timestamptz  NOT NULL DEFAULT now(),
-    updated_at     timestamptz  NOT NULL DEFAULT now(),
-
-    CONSTRAINT fk_users_hotels FOREIGN KEY (hotel_id)
-        REFERENCES hotels (id) ON DELETE RESTRICT,
-    CONSTRAINT uq_users_email UNIQUE (email),
-    CONSTRAINT ck_users_email_lowercase CHECK (email = lower(email))
-);
-
-CREATE INDEX ix_users_hotel_id ON users (hotel_id);
-
-CREATE TABLE roles (
-    id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name         varchar(100) NOT NULL,
-    description  text,
-    is_system    boolean      NOT NULL DEFAULT false,
-    created_at   timestamptz  NOT NULL DEFAULT now(),
-    updated_at   timestamptz  NOT NULL DEFAULT now(),
-
-    CONSTRAINT uq_roles_name UNIQUE (name)
-);
-
 CREATE TABLE permissions (
     id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     code         varchar(100) NOT NULL,
@@ -106,28 +81,13 @@ CREATE TABLE role_permissions (
     created_at     timestamptz NOT NULL DEFAULT now(),
 
     CONSTRAINT fk_role_permissions_roles FOREIGN KEY (role_id)
-        REFERENCES roles (id) ON DELETE CASCADE,
+        REFERENCES identity.roles (id) ON DELETE CASCADE,
     CONSTRAINT fk_role_permissions_permissions FOREIGN KEY (permission_id)
         REFERENCES permissions (id) ON DELETE RESTRICT,
     CONSTRAINT uq_role_permissions_role_permission UNIQUE (role_id, permission_id)
 );
 
 CREATE INDEX ix_role_permissions_permission_id ON role_permissions (permission_id);
-
-CREATE TABLE user_roles (
-    id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id     bigint      NOT NULL,
-    role_id     bigint      NOT NULL,
-    created_at  timestamptz NOT NULL DEFAULT now(),
-
-    CONSTRAINT fk_user_roles_users FOREIGN KEY (user_id)
-        REFERENCES users (id) ON DELETE CASCADE,
-    CONSTRAINT fk_user_roles_roles FOREIGN KEY (role_id)
-        REFERENCES roles (id) ON DELETE RESTRICT,
-    CONSTRAINT uq_user_roles_user_role UNIQUE (user_id, role_id)
-);
-
-CREATE INDEX ix_user_roles_role_id ON user_roles (role_id);
 
 CREATE TABLE content_pages (
     id                  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -146,7 +106,7 @@ CREATE TABLE content_pages (
     CONSTRAINT fk_content_pages_hotels FOREIGN KEY (hotel_id)
         REFERENCES hotels (id) ON DELETE RESTRICT,
     CONSTRAINT fk_content_pages_users FOREIGN KEY (created_by_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT uq_content_pages_hotel_slug_version UNIQUE (hotel_id, slug, version),
     CONSTRAINT ck_content_pages_page_type
         CHECK (page_type IN ('info', 'terms', 'privacy')),
@@ -249,7 +209,7 @@ CREATE TABLE online_check_ins (
     CONSTRAINT fk_online_check_ins_stays FOREIGN KEY (stay_id)
         REFERENCES stays (id) ON DELETE CASCADE,
     CONSTRAINT fk_online_check_ins_users FOREIGN KEY (completed_by_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT fk_online_check_ins_content_pages FOREIGN KEY (terms_page_id)
         REFERENCES content_pages (id) ON DELETE RESTRICT,
     CONSTRAINT uq_online_check_ins_stay UNIQUE (stay_id),
@@ -325,11 +285,11 @@ CREATE TABLE housekeeping_tasks (
     CONSTRAINT fk_housekeeping_tasks_templates FOREIGN KEY (checklist_template_id)
         REFERENCES checklist_templates (id) ON DELETE RESTRICT,
     CONSTRAINT fk_housekeeping_tasks_assigned_to FOREIGN KEY (assigned_to_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT fk_housekeeping_tasks_assigned_by FOREIGN KEY (assigned_by_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT fk_housekeeping_tasks_inspected_by FOREIGN KEY (inspected_by_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT ck_housekeeping_tasks_task_type
         CHECK (task_type IN ('departure', 'stay_over')),
     CONSTRAINT ck_housekeeping_tasks_status
@@ -399,13 +359,13 @@ CREATE TABLE issues (
     CONSTRAINT fk_issues_categories FOREIGN KEY (category_id)
         REFERENCES issue_categories (id) ON DELETE RESTRICT,
     CONSTRAINT fk_issues_reported_by_user FOREIGN KEY (reported_by_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT fk_issues_reported_by_guest FOREIGN KEY (reported_by_guest_id)
         REFERENCES guests (id) ON DELETE RESTRICT,
     CONSTRAINT fk_issues_housekeeping_tasks FOREIGN KEY (housekeeping_task_id)
         REFERENCES housekeeping_tasks (id) ON DELETE RESTRICT,
     CONSTRAINT fk_issues_assigned_to FOREIGN KEY (assigned_to_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT ck_issues_priority
         CHECK (priority IN ('low', 'medium', 'high', 'critical')),
     CONSTRAINT ck_issues_status
@@ -436,7 +396,7 @@ CREATE TABLE issue_comments (
     CONSTRAINT fk_issue_comments_issues FOREIGN KEY (issue_id)
         REFERENCES issues (id) ON DELETE CASCADE,
     CONSTRAINT fk_issue_comments_users FOREIGN KEY (author_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT fk_issue_comments_guests FOREIGN KEY (author_guest_id)
         REFERENCES guests (id) ON DELETE RESTRICT,
     CONSTRAINT ck_issue_comments_one_author
@@ -513,7 +473,7 @@ CREATE TABLE service_orders (
     CONSTRAINT fk_service_orders_stays FOREIGN KEY (stay_id)
         REFERENCES stays (id) ON DELETE RESTRICT,
     CONSTRAINT fk_service_orders_users FOREIGN KEY (assigned_to_user_id)
-        REFERENCES users (id) ON DELETE RESTRICT,
+        REFERENCES identity.users (id) ON DELETE RESTRICT,
     CONSTRAINT ck_service_orders_quantity CHECK (quantity > 0),
     CONSTRAINT ck_service_orders_unit_price CHECK (unit_price >= 0),
     CONSTRAINT ck_service_orders_status
@@ -540,8 +500,8 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_hotels_updated_at BEFORE UPDATE ON hotels FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_room_types_updated_at BEFORE UPDATE ON room_types FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_rooms_updated_at BEFORE UPDATE ON rooms FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-CREATE TRIGGER trg_roles_updated_at BEFORE UPDATE ON roles FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_identity_users_updated_at BEFORE UPDATE ON identity.users FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_identity_roles_updated_at BEFORE UPDATE ON identity.roles FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_content_pages_updated_at BEFORE UPDATE ON content_pages FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_document_templates_updated_at BEFORE UPDATE ON document_templates FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_guests_updated_at BEFORE UPDATE ON guests FOR EACH ROW EXECUTE FUNCTION set_updated_at();

@@ -25,8 +25,6 @@ public partial class OnlineCheckIn
 
     public DateTime CreatedAt { get; set; }
 
-    public virtual User? CompletedByUser { get; set; }
-
     public virtual Stay Stay { get; set; } = null!;
 
     public virtual ContentPage TermsPage { get; set; } = null!;

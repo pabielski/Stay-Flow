@@ -17,6 +17,8 @@ public partial class RoomType
 
     public decimal SizeM2 { get; set; }
 
+    public decimal PricePerNight { get; set; }
+
     public bool IsActive { get; set; }
 
     public DateTime CreatedAt { get; set; }

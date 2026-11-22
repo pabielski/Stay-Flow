@@ -39,8 +39,6 @@ public partial class Issue
 
     public DateTime UpdatedAt { get; set; }
 
-    public virtual User? AssignedToUser { get; set; }
-
     public virtual IssueCategory Category { get; set; } = null!;
 
     public virtual Hotel Hotel { get; set; } = null!;
@@ -50,8 +48,6 @@ public partial class Issue
     public virtual ICollection<IssueComment> IssueComments { get; set; } = new List<IssueComment>();
 
     public virtual Guest? ReportedByGuest { get; set; }
-
-    public virtual User? ReportedByUser { get; set; }
 
     public virtual Room? Room { get; set; }
 }

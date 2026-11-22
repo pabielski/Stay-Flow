@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using StayFlow.Api.Errors;
+using StayFlow.Api.Seeding;
 using StayFlow.Data;
 using StayFlow.Services;
 
@@ -33,6 +34,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    using var scope = app.Services.CreateScope();
+    await IdentitySeeder.SeedAdminAsync(scope.ServiceProvider, app.Configuration);
 
 }
 

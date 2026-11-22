@@ -13,6 +13,10 @@ public partial class Stay
 
     public DateOnly CheckOutDate { get; set; }
 
+    public decimal PricePerNight { get; set; }
+
+    public decimal TotalPrice { get; set; }
+
     public string Status { get; set; } = null!;
 
     public string PaymentStatus { get; set; } = null!;

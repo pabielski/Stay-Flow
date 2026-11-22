@@ -29,8 +29,6 @@ public partial class ContentPage
 
     public DateTime UpdatedAt { get; set; }
 
-    public virtual User? CreatedByUser { get; set; }
-
     public virtual Hotel Hotel { get; set; } = null!;
 
     public virtual ICollection<OnlineCheckIn> OnlineCheckIns { get; set; } = new List<OnlineCheckIn>();

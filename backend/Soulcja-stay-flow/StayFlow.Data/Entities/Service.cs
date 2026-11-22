@@ -17,6 +17,8 @@ public partial class Service
 
     public bool RequiresBooking { get; set; }
 
+    public bool AvailableAtCheckIn { get; set; }
+
     public short? DurationMinutes { get; set; }
 
     public short? Capacity { get; set; }

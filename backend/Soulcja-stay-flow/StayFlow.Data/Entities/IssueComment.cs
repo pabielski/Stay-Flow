@@ -21,7 +21,5 @@ public partial class IssueComment
 
     public virtual Guest? AuthorGuest { get; set; }
 
-    public virtual User? AuthorUser { get; set; }
-
     public virtual Issue Issue { get; set; } = null!;
 }

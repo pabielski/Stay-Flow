@@ -14,6 +14,4 @@ public partial class RolePermission
     public DateTime CreatedAt { get; set; }
 
     public virtual Permission Permission { get; set; } = null!;
-
-    public virtual Role Role { get; set; } = null!;
 }
